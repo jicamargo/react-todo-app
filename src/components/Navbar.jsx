@@ -1,32 +1,122 @@
-import "../styles.css";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useOnClickOutside } from "@/components/useOnClickOutside";
+import { NavLink, useNavigate } from "react-router-dom";
+import { useAuthContext } from '@/context/AuthContext';
+import React from 'react';
+import { MdClose } from 'react-icons/md';
+import { FiMenu } from 'react-icons/fi';
 
+const links = [
+  { path: '/', text: 'Home' },
+  { path: 'about', text: 'About' },
+  { path: 'profile', text: 'Profile' },
+  { path: 'login', text: 'Login' },
+];
 
 const Navbar = () => {
   const [dropdown, setDropdown] = useState(false);
-  const ref = useRef();
+  const [navbarOpen, setNavbarOpen] = useState(false);
 
-  useOnClickOutside(ref, dropdown, () => setDropdown(false));
+  // const ref = useRef();
+  // useOnClickOutside(ref, dropdown, () => setDropdown(false));
+
+  const { user, logout } = useAuthContext();
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   
+  const ref = useRef();
+  useEffect(() => {
+    const handler = (event) => {
+      if (
+        navbarOpen &&
+        ref.current &&
+        !ref.current.contains(event.target)
+      ) {
+        setNavbarOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => {
+      // Cleanup the event listener
+      document.removeEventListener('mousedown', handler);
+    };
+  }, [navbarOpen]);
+
   return (
-    <nav>
-      <ul>
-        <li>Home</li>
-        <li>About</li>
-        <li ref={ref}>
-          <button onClick={() => setDropdown((prev) => !prev)}>
-            Services <span>&#8595;</span>
-          </button>
-          {dropdown && (
-            <ul>
-              <li>Design</li>
-              <li>Development</li>
-            </ul>
+    <>
+      <nav ref={ref} className="navbar">
+        <button
+          className="toggle"
+          onClick={() => setNavbarOpen((prev) => !prev)}
+        >
+          {navbarOpen ? (
+            <MdClose style={{ width: '32px', height: '32px' }} />
+          ) : (
+            <FiMenu
+              style={{
+                width: '32px',
+                height: '32px',
+              }}
+            />
           )}
-        </li>
-      </ul>
-    </nav>
+        </button>
+        <ul className={`menu-nav${navbarOpen ? ' show-menu' : ''}`}>
+          {links.map((link) => {
+            return (
+              <React.Fragment key={link.text}>
+                {link.path === 'login' ? (
+                  !user && (
+                    <li>
+                      <NavLink 
+                        to={link.path}
+                        onClick={() => setNavbarOpen(false)}
+                      >
+                        {link.text}
+                      </NavLink>
+                    </li>
+                  )
+                  ) : link.path === 'profile' ? (
+                    user && (
+                      <li>
+                        <NavLink 
+                          to={link.path}
+                          onClick={() => setNavbarOpen(false)}
+                        >
+                          {link.text}
+                        </NavLink>
+                      </li>
+                    )
+                  ) : (
+                  <li>
+                    <NavLink 
+                      to={link.path}
+                      onClick={() => setNavbarOpen(false)}
+                    >
+                      {link.text}
+                    </NavLink>
+                  </li>
+                )}
+              </React.Fragment>
+            );
+          })}
+          {!user && (
+            <li className="log-in">
+              <span>Log in to edit to-dos</span>
+            </li>
+          )}
+        </ul>        
+      </nav>
+      {user && (
+        <div className="logout">
+          <p>{user}</p>
+          {<button onClick={handleLogout}>Logout</button>}
+        </div>
+      )}
+    </>
   );
 };
+
 export default Navbar;
