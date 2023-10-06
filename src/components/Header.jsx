@@ -1,8 +1,9 @@
-const Header = () => {
+import styles from "@/styles/Header.module.css";
+
+const Header = (props) => {
   return (
-    <header>
-      <h1>todos</h1>
-      <p>Items will persist in the browser local storage</p>
+    <header className={styles.header}>
+       {props.children}
     </header>
   );
 };
